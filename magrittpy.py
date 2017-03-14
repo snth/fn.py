@@ -40,8 +40,8 @@ _ = Lambda()
 
 class Pipe(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, state=None):
+        self.state = state
 
     def __call__(self, state):
         self.state = state
@@ -66,18 +66,26 @@ class Pipe(object):
         else:
             raise ValueError("{!r}: {!r}".format('function', function))
 
+    def __rlshift__(self, prev):
+        # __lshift__ usually applies the function and then previous state. Here
+        # we're given a Pipe() as the function so we do nothing and just return
+        # the previous state. This is basically a convenience to initiate a
+        # pipe after the fact.
+        return self(prev)
+
 
 pipe = Pipe()
 do = Pipe()
+done = None
 
 
 if __name__=='__main__':
     print(pipe(5) >> (lambda n: n*2) >> (lambda n: n+1) >> None)
-    print(pipe(5) >> _*2 >> _+1 >> None)
-    print(do(xrange(3)) >> list >> None)
+    print(pipe(5) >> _*2 >> _+1 >> done)
+    print(do(xrange(3)) >> list >> done)
     do(xrange(3)) \
         >> list \
         << print \
         >> (lambda l: map(_*2,l)) \
         << print \
-        >> None
+        >> done
